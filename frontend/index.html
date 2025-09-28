@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Servers Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .server { border: 1px solid #ccc; margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .server h3 { margin-top: 0; color: #333; }
+        button { background: #007cba; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #005a87; }
+        .response { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; white-space: pre-wrap; }
+        input, select { padding: 5px; margin: 5px; border: 1px solid #ccc; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>MCP Servers Dashboard</h1>
+    
+    <div class="server">
+        <h3>AWS MCP Server</h3>
+        <button onclick="callTool('aws', 'list_s3_buckets', {})">List S3 Buckets</button>
+        <button onclick="callTool('aws', 'get_aws_regions', {})">Get AWS Regions</button>
+        <button onclick="callTool('aws', 'check_free_tier_usage', {})">Check Free Tier</button>
+        <div>
+            <input type="text" id="bedrock-prompt" placeholder="Enter prompt for Bedrock">
+            <button onclick="callBedrock()">Invoke Bedrock</button>
+        </div>
+        <div id="aws-response" class="response"></div>
+    </div>
+
+    <div class="server">
+        <h3>Database MCP Server</h3>
+        <button onclick="callTool('database', 'get_schema', {})">Get Schema</button>
+        <div>
+            <input type="text" id="sql-query" placeholder="SELECT * FROM users" style="width: 300px;">
+            <button onclick="executeQuery()">Execute Query</button>
+        </div>
+        <div id="database-response" class="response"></div>
+    </div>
+
+    <div class="server">
+        <h3>Custom MCP Server</h3>
+        <div>
+            <input type="text" id="weather-city" placeholder="City name">
+            <button onclick="getWeather()">Get Weather</button>
+        </div>
+        <button onclick="callTool('custom', 'generate_timestamp', {})">Generate Timestamp</button>
+        <div>
+            <input type="text" id="store-key" placeholder="Key">
+            <input type="text" id="store-value" placeholder="Value">
+            <button onclick="storeData()">Store Data</button>
+        </div>
+        <div id="custom-response" class="response"></div>
+    </div>
+
+    <div class="server">
+        <h3>Filesystem MCP Server</h3>
+        <div>
+            <input type="text" id="file-path" placeholder="/app" style="width: 200px;">
+            <button onclick="listDirectory()">List Directory</button>
+        </div>
+        <div id="filesystem-response" class="response"></div>
+    </div>
+
+    <script>
+        const servers = {
+            aws: 'http://aws-mcp-service',
+            database: 'http://database-mcp-service', 
+            custom: 'http://custom-mcp-service',
+            filesystem: 'http://filesystem-mcp-service'
+        };
+
+        async function callTool(server, toolName, args) {
+            try {
+                const response = await fetch(`${servers[server]}/tools/call`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: toolName, arguments: args })
+                });
+                const result = await response.json();
+                document.getElementById(`${server}-response`).textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById(`${server}-response`).textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function callBedrock() {
+            const prompt = document.getElementById('bedrock-prompt').value;
+            if (prompt) {
+                callTool('aws', 'invoke_bedrock_model', { prompt: prompt, max_tokens: 100 });
+            }
+        }
+
+        function executeQuery() {
+            const query = document.getElementById('sql-query').value;
+            if (query) {
+                callTool('database', 'execute_query', { query: query });
+            }
+        }
+
+        function getWeather() {
+            const city = document.getElementById('weather-city').value;
+            if (city) {
+                callTool('custom', 'get_weather', { city: city });
+            }
+        }
+
+        function storeData() {
+            const key = document.getElementById('store-key').value;
+            const value = document.getElementById('store-value').value;
+            if (key && value) {
+                callTool('custom', 'store_data', { key: key, value: value });
+            }
+        }
+
+        function listDirectory() {
+            const path = document.getElementById('file-path').value || '/app';
+            callTool('filesystem', 'list_directory', { path: path });
+        }
+    </script>
+</body>
+</html>

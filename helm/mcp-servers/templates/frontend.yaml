@@ -1,0 +1,43 @@
+{{- if .Values.servers.frontend.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-frontend
+  labels:
+    app: mcp-frontend
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: mcp-frontend
+  template:
+    metadata:
+      labels:
+        app: mcp-frontend
+    spec:
+      containers:
+      - name: mcp-frontend
+        image: {{ .Values.servers.frontend.image }}
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-frontend-service
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: mcp-frontend
+{{- end }}

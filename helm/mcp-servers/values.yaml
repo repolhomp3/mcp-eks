@@ -1,0 +1,42 @@
+replicaCount: 1
+
+image:
+  repository: your-registry
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8080
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+servers:
+  aws:
+    enabled: true
+    image: your-registry/aws-mcp:latest
+  database:
+    enabled: true
+    image: your-registry/database-mcp:latest
+  custom:
+    enabled: true
+    image: your-registry/custom-mcp:latest
+  filesystem:
+    enabled: true
+    image: your-registry/filesystem-mcp:latest
+  frontend:
+    enabled: true
+    image: your-registry/mcp-frontend:latest
